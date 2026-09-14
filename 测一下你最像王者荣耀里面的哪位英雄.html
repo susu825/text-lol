@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>王者人格测试 · 测测你最像哪位英雄</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;
+  background:linear-gradient(160deg,#eef4ff 0%,#f4f0ff 40%,#eaf6ff 100%);
+  background-attachment:fixed;
+  color:#1a2340;min-height:100vh;overflow-x:hidden;
+}
+#app{max-width:480px;margin:0 auto;min-height:100vh;position:relative}
+
+/* ===== 背景光晕 ===== */
+.bg-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.glow{position:fixed;border-radius:50%;filter:blur(70px);opacity:.5;z-index:0;pointer-events:none}
+.glow-1{width:320px;height:320px;background:#a8c5ff;top:-80px;left:-100px;animation:float1 18s ease-in-out infinite}
+.glow-2{width:280px;height:280px;background:#d5b8ff;top:40%;right:-120px;animation:float2 22s ease-in-out infinite}
+.glow-3{width:260px;height:260px;background:#a8ecff;bottom:-60px;left:-60px;animation:float3 20s ease-in-out infinite}
+@keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(60px,80px)}}
+@keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(-70px,-50px)}}
+@keyframes float3{0%,100%{transform:translate(0,0)}50%{transform:translate(80px,-60px)}}
+
+#app>*{position:relative;z-index:1}
+
+/* ===== 通用 ===== */
+.page{display:none}
+.page.active{display:block;animation:pageIn .45s cubic-bezier(.22,1,.36,1) both}
+@keyframes pageIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1);box-shadow:0 0 40px rgba(74,125,255,.55)}50%{transform:scale(1.1);box-shadow:0 0 60px rgba(74,125,255,.8)}}
+
+/* ===== 首页 ===== */
+.home{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 26px 40px;text-align:center}
+.home-visual{position:relative;width:180px;height:180px;margin-bottom:28px;display:flex;align-items:center;justify-content:center}
+.hex-ring{position:absolute;border-radius:50%;border:1.5px solid transparent}
+.ring-1{width:180px;height:180px;border-top-color:#4a7dff;border-right-color:rgba(74,125,255,.25);animation:spin 12s linear infinite}
+.ring-2{width:140px;height:140px;border-bottom-color:#8b5cf6;border-left-color:rgba(139,92,246,.25);animation:spin 9s linear infinite reverse}
+.ring-3{width:100px;height:100px;border-top-color:#06b6d4;border-left-color:rgba(6,182,212,.2);animation:spin 6s linear infinite}
+.core{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#4a7dff,#8b5cf6);box-shadow:0 0 40px rgba(74,125,255,.55),0 0 80px rgba(139,92,246,.3);animation:pulse 2.5s ease-in-out infinite}
+
+.home-badge{display:inline-block;padding:5px 16px;border-radius:20px;font-size:11px;color:#4a7dff;letter-spacing:3px;font-weight:700;background:rgba(255,255,255,.7);border:1px solid rgba(74,125,255,.3);box-shadow:0 4px 16px rgba(74,125,255,.12);margin-bottom:22px}
+.home-title{font-size:36px;font-weight:900;line-height:1.18;letter-spacing:-1px;margin-bottom:12px;background:linear-gradient(135deg,#3b6fff,#8b5cf6 60%,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.home-sub{font-size:14px;color:#5a6785;line-height:1.7;margin-bottom:6px}
+.home-desc{font-size:12.5px;color:#8a94ad;margin-bottom:30px;line-height:1.6}
+.home-stats{display:flex;gap:0;margin-bottom:34px;background:rgba(255,255,255,.75);backdrop-filter:blur(16px);border:1px solid rgba(120,150,255,.2);border-radius:20px;padding:16px 8px;box-shadow:0 8px 28px rgba(90,130,255,.1)}
+.home-stat{flex:1;text-align:center;position:relative}
+.home-stat+.home-stat::before{content:'';position:absolute;left:0;top:20%;height:60%;width:1px;background:rgba(120,150,255,.2)}
+.home-stat .num{font-size:22px;font-weight:900;background:linear-gradient(135deg,#4a7dff,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.home-stat .label{font-size:10.5px;color:#8a94ad;margin-top:3px;letter-spacing:.5px}
+.home-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:17px 56px;font-size:17px;font-weight:800;color:#fff;background:linear-gradient(135deg,#4a7dff,#8b5cf6);border:none;border-radius:50px;cursor:pointer;letter-spacing:3px;box-shadow:0 10px 30px rgba(74,125,255,.4),0 0 0 1px rgba(255,255,255,.2) inset;transition:all .25s}
+.home-btn:active{transform:scale(.96);box-shadow:0 6px 20px rgba(74,125,255,.5)}
+.home-footer{margin-top:26px;font-size:10.5px;color:#9aa4bd;letter-spacing:.5px}
+
+/* ===== 答题页 ===== */
+.quiz{min-height:100vh;display:flex;flex-direction:column;padding:22px 20px 110px}
+.quiz-header{margin-bottom:22px}
+.quiz-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.quiz-counter{font-size:12px;color:#8a94ad;font-weight:600;letter-spacing:1px}
+.quiz-counter span{color:#4a7dff;font-size:19px;font-weight:900;margin:0 2px}
+.quiz-tag{font-size:10px;color:#4a7dff;background:rgba(74,125,255,.1);padding:3px 10px;border-radius:10px;font-weight:700;letter-spacing:1px}
+.quiz-bar-bg{height:6px;background:rgba(120,150,255,.14);border-radius:3px;overflow:hidden}
+.quiz-bar{height:100%;background:linear-gradient(90deg,#4a7dff,#8b5cf6,#06b6d4);border-radius:3px;transition:width .45s cubic-bezier(.22,1,.36,1);width:0;box-shadow:0 0 12px rgba(74,125,255,.5)}
+
+.quiz-scene{background:rgba(255,255,255,.82);backdrop-filter:blur(18px);border:1px solid rgba(120,150,255,.22);border-radius:22px;padding:24px 22px;margin-bottom:18px;box-shadow:0 10px 34px rgba(90,130,255,.1);position:relative;overflow:hidden}
+.quiz-scene::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,#4a7dff,#8b5cf6,#06b6d4)}
+.quiz-scene-label{font-size:10.5px;color:#4a7dff;letter-spacing:3px;margin-bottom:12px;font-weight:800}
+.quiz-scene-text{font-size:15.5px;line-height:1.85;color:#2a3450;font-weight:500}
+
+.quiz-options{display:flex;flex-direction:column;gap:11px}
+.quiz-option{padding:16px 17px;background:rgba(255,255,255,.78);backdrop-filter:blur(12px);border:1.5px solid rgba(120,150,255,.18);border-radius:16px;cursor:pointer;transition:all .22s cubic-bezier(.22,1,.36,1);font-size:14px;line-height:1.65;color:#3b4a6b;display:flex;gap:12px;align-items:flex-start;box-shadow:0 2px 10px rgba(90,130,255,.05)}
+.quiz-option:active{transform:scale(.985)}
+.quiz-option .opt-key{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;border-radius:8px;background:rgba(74,125,255,.1);color:#4a7dff;font-size:11.5px;font-weight:900;margin-top:1px;flex-shrink:0;transition:all .22s}
+.quiz-option.selected{background:linear-gradient(135deg,rgba(74,125,255,.12),rgba(139,92,246,.1));border-color:#4a7dff;color:#1a2340;box-shadow:0 6px 22px rgba(74,125,255,.2);transform:translateY(-1px)}
+.quiz-option.selected .opt-key{background:linear-gradient(135deg,#4a7dff,#8b5cf6);color:#fff}
+
+.quiz-footer{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;padding:14px 20px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(to top,rgba(238,244,255,.98) 60%,rgba(238,244,255,0));display:flex;gap:12px;z-index:20}
+.nav-btn{flex:1;padding:15px;border-radius:16px;font-size:15px;font-weight:800;letter-spacing:1px;border:none;cursor:pointer;transition:all .22s;display:flex;align-items:center;justify-content:center;gap:6px}
+.nav-btn.prev{background:rgba(255,255,255,.9);color:#5a6785;border:1.5px solid rgba(120,150,255,.25);box-shadow:0 4px 14px rgba(90,130,255,.08)}
+.nav-btn.prev:disabled{opacity:.4;cursor:not-allowed}
+.nav-btn.next{background:linear-gradient(135deg,#4a7dff,#8b5cf6);color:#fff;box-shadow:0 8px 24px rgba(74,125,255,.35)}
+.nav-btn.next:disabled{background:rgba(120,150,255,.15);color:#a8b2c8;box-shadow:none;cursor:not-allowed}
+.nav-btn:not(:disabled):active{transform:scale(.97)}
+
+/* ===== 加载页 ===== */
+.loading{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px}
+.loading-visual{position:relative;width:120px;height:120px;margin-bottom:32px;display:flex;align-items:center;justify-content:center}
+.loading-ring{position:absolute;border-radius:50%;border:2px solid transparent}
+.loading-ring.r1{width:120px;height:120px;border-top-color:#4a7dff;border-right-color:rgba(74,125,255,.2);animation:spin 1.4s linear infinite}
+.loading-ring.r2{width:88px;height:88px;border-bottom-color:#8b5cf6;border-left-color:rgba(139,92,246,.2);animation:spin 1.1s linear infinite reverse}
+.loading-ring.r3{width:56px;height:56px;border-top-color:#06b6d4;animation:spin .8s linear infinite}
+.loading-core{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#4a7dff,#8b5cf6);box-shadow:0 0 24px rgba(74,125,255,.6);animation:pulse 1.4s ease-in-out infinite}
+.loading-text{font-size:14px;color:#5a6785;letter-spacing:3px;font-weight:600;margin-bottom:8px}
+.loading-sub{font-size:11.5px;color:#9aa4bd;letter-spacing:1px}
+
+/* ===== 结果页 ===== */
+.result{min-height:100vh;padding:26px 18px 56px}
+.result-hero{text-align:center;margin-bottom:20px}
+.hero-tag{display:inline-block;padding:4px 16px;border-radius:20px;font-size:10.5px;color:#4a7dff;letter-spacing:3px;font-weight:800;background:rgba(255,255,255,.8);border:1px solid rgba(74,125,255,.3);box-shadow:0 4px 14px rgba(74,125,255,.12);margin-bottom:18px}
+.hero-avatar-wrap{position:relative;width:150px;height:150px;margin:0 auto 18px;display:flex;align-items:center;justify-content:center}
+.avatar-ring{position:absolute;border-radius:50%;border:1.5px solid transparent}
+.ar1{width:150px;height:150px;border-top-color:#4a7dff;border-right-color:rgba(74,125,255,.25);animation:spin 14s linear infinite}
+.ar2{width:132px;height:132px;border-bottom-color:#8b5cf6;border-left-color:rgba(139,92,246,.25);animation:spin 10s linear infinite reverse}
+.hero-avatar{width:114px;height:114px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 8px 32px rgba(74,125,255,.35),0 0 0 1px rgba(74,125,255,.2);background:linear-gradient(135deg,#4a7dff,#8b5cf6)}
+.hero-name{font-size:30px;font-weight:900;letter-spacing:1px;background:linear-gradient(135deg,#3b6fff,#8b5cf6 70%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.hero-title{font-size:12.5px;color:#5a6785;letter-spacing:1.5px;margin-bottom:14px}
+.hero-quote{font-size:13px;color:#4a7dff;font-weight:600;padding:11px 20px;background:rgba(255,255,255,.85);border:1px solid rgba(74,125,255,.2);border-radius:14px;display:inline-block;max-width:92%;line-height:1.65;box-shadow:0 6px 20px rgba(74,125,255,.1)}
+
+.card{background:rgba(255,255,255,.85);backdrop-filter:blur(18px);border:1px solid rgba(120,150,255,.2);border-radius:20px;padding:22px 20px;margin-bottom:14px;box-shadow:0 8px 28px rgba(90,130,255,.1);position:relative;overflow:hidden}
+.card-title{font-size:12.5px;color:#3b6fff;letter-spacing:2px;font-weight:900;margin-bottom:16px;display:flex;align-items:center;gap:9px}
+.card-title::before{content:'';width:4px;height:15px;background:linear-gradient(180deg,#4a7dff,#8b5cf6);border-radius:2px}
+.card-title .en{font-size:9.5px;color:#a8b2c8;letter-spacing:1px;font-weight:600;margin-left:auto}
+.card p{font-size:13.5px;line-height:1.9;color:#3b4a6b}
+
+.radar-wrap{position:relative;width:100%;max-width:320px;margin:0 auto}
+#radarCanvas{width:100%;display:block}
+
+.dim-list{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+.dim-row{display:flex;align-items:center;gap:10px}
+.dim-name{font-size:11.5px;color:#5a6785;width:44px;font-weight:700;flex-shrink:0}
+.dim-track{flex:1;height:7px;background:rgba(120,150,255,.12);border-radius:4px;overflow:hidden}
+.dim-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#4a7dff,#8b5cf6);transition:width .9s cubic-bezier(.22,1,.36,1);width:0}
+.dim-val{font-size:11.5px;color:#4a7dff;font-weight:900;width:34px;text-align:right;flex-shrink:0}
+
+.traits{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.trait{padding:7px 15px;border-radius:20px;font-size:12px;font-weight:700;background:linear-gradient(135deg,rgba(74,125,255,.12),rgba(139,92,246,.1));color:#3b6fff;border:1px solid rgba(74,125,255,.25)}
+
+.partner-box{display:flex;align-items:center;gap:14px;padding:16px;background:linear-gradient(135deg,rgba(74,125,255,.07),rgba(139,92,246,.07));border-radius:16px;border:1px solid rgba(74,125,255,.18);margin-bottom:12px}
+.partner-avatar{width:60px;height:60px;border-radius:50%;object-fit:cover;border:2.5px solid #fff;box-shadow:0 6px 18px rgba(74,125,255,.3);flex-shrink:0;background:linear-gradient(135deg,#4a7dff,#8b5cf6)}
+.partner-info{flex:1;min-width:0}
+.partner-name{font-size:16px;font-weight:900;color:#1a2340;margin-bottom:4px}
+.partner-reason{font-size:12px;color:#5a6785;line-height:1.6}
+.partner-badge{display:inline-block;font-size:9.5px;color:#fff;background:linear-gradient(135deg,#4a7dff,#8b5cf6);padding:2px 9px;border-radius:8px;font-weight:800;letter-spacing:1px;margin-bottom:6px}
+
+.info-grid{display:flex;flex-direction:column;gap:12px}
+.info-item{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:rgba(120,150,255,.06);border-radius:14px;border-left:3px solid #4a7dff}
+.info-icon{font-size:17px;flex-shrink:0;line-height:1.4}
+.info-body{flex:1}
+.info-label{font-size:10.5px;color:#8a94ad;letter-spacing:1.5px;font-weight:800;margin-bottom:4px}
+.info-text{font-size:13px;color:#3b4a6b;line-height:1.7;font-weight:500}
+.info-item.purple{border-left-color:#8b5cf6}
+.info-item.cyan{border-left-color:#06b6d4}
+
+.sw-grid{display:flex;flex-direction:column;gap:11px}
+.sw-item{padding:15px 17px;border-radius:14px;font-size:13px;line-height:1.75;color:#3b4a6b}
+.sw-item.good{background:linear-gradient(135deg,rgba(16,185,129,.09),rgba(16,185,129,.04));border:1px solid rgba(16,185,129,.22)}
+.sw-item.warn{background:linear-gradient(135deg,rgba(245,158,11,.09),rgba(245,158,11,.04));border:1px solid rgba(245,158,11,.22)}
+.sw-label{font-size:11px;font-weight:900;letter-spacing:1.5px;margin-bottom:7px;display:block}
+.sw-label.good{color:#059669}
+.sw-label.warn{color:#d97706}
+
+.advice-box{padding:16px 18px;background:linear-gradient(135deg,rgba(74,125,255,.08),rgba(139,92,246,.06));border-radius:16px;border:1px solid rgba(74,125,255,.18);font-size:13.5px;line-height:1.9;color:#2a3450}
+
+.summary-box{text-align:center;padding:20px 16px;background:linear-gradient(135deg,rgba(74,125,255,.1),rgba(139,92,246,.08));border-radius:18px;border:1px solid rgba(74,125,255,.2)}
+.summary-box .big{font-size:15px;font-weight:900;color:#3b6fff;letter-spacing:.5px;line-height:1.7}
+
+.result-actions{display:flex;gap:12px;margin-top:20px}
+.result-btn{flex:1;padding:15px;border-radius:16px;font-size:14.5px;font-weight:800;text-align:center;cursor:pointer;transition:all .22s;border:none;letter-spacing:1px}
+.result-btn.primary{background:linear-gradient(135deg,#4a7dff,#8b5cf6);color:#fff;box-shadow:0 8px 24px rgba(74,125,255,.35)}
+.result-btn.secondary{background:rgba(255,255,255,.9);color:#5a6785;border:1.5px solid rgba(120,150,255,.25);box-shadow:0 4px 14px rgba(90,130,255,.08)}
+.result-btn:active{transform:scale(.97)}
+.watermark{text-align:center;margin-top:22px;font-size:10px;color:#b8c0d4;letter-spacing:1px}
+
+.egg{margin-top:14px;padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,rgba(6,182,212,.08),rgba(74,125,255,.06));border:1px dashed rgba(6,182,212,.35);font-size:12.5px;line-height:1.75;color:#3b4a6b}
+.egg-title{font-size:11px;color:#06b6d4;font-weight:900;letter-spacing:2px;margin-bottom:6px}
+.egg strong{color:#3b6fff}
+</style>
+</head>
+<body>
+<canvas class="bg-canvas" id="bgCanvas"></canvas>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+<div class="glow glow-3"></div>
+
+<div id="app">
+
+<!-- ==================== 首页 ==================== -->
+<div class="page active" id="pageHome">
+  <div class="home">
+    <div class="home-visual">
+      <div class="hex-ring ring-1"></div>
+      <div class="hex-ring ring-2"></div>
+      <div class="hex-ring ring-3"></div>
+      <div class="core"></div>
+    </div>
+    <div class="home-badge">◈ WZTI 王者人格测试 ◈</div>
+    <h1 class="home-title">你的本命<br>英雄是谁？</h1>
+    <p class="home-sub">30 道生活情景题 · 深度人格解析</p>
+    <p class="home-desc">不是简单的性格标签<br>而是从你的真实选择里，看见你</p>
+    <div class="home-stats">
+      <div class="home-stat"><div class="num">30</div><div class="label">情景题</div></div>
+      <div class="home-stat"><div class="num">20</div><div class="label">英雄结果</div></div>
+      <div class="home-stat"><div class="num">6</div><div class="label">人格维度</div></div>
+    </div>
+    <button class="home-btn" onclick="startQuiz()">⚔ 开始测试</button>
+    <p class="home-footer">测试结果仅供娱乐参考 · 不收集任何个人信息</p>
+  </div>
+</div>
+
+<!-- ==================== 答题页 ==================== -->
+<div class="page" id="pageQuiz">
+  <div class="quiz">
+    <div class="quiz-header">
+      <div class="quiz-top">
+        <div class="quiz-counter">第 <span id="qCurrent">1</span> / 30 题</div>
+        <div class="quiz-tag">◈ 深度情景</div>
+      </div>
+      <div class="quiz-bar-bg"><div class="quiz-bar" id="qBar"></div></div>
+    </div>
+    <div class="quiz-scene">
+      <div class="quiz-scene-label">SCENE <span id="qSceneNum">01</span></div>
+      <div class="quiz-scene-text" id="qSceneText"></div>
+    </div>
+    <div class="quiz-options" id="qOptions"></div>
+  </div>
+  <div class="quiz-footer">
+    <button class="nav-btn prev" id="btnPrev" onclick="prevQuestion()">← 上一题</button>
+    <button class="nav-btn next" id="btnNext" onclick="nextQuestion()">下一题 →</button>
+  </div>
+</div>
+
+<!-- ==================== 加载页 ==================== -->
+<div class="page" id="pageLoading">
+  <div class="loading">
+    <div class="loading-visual">
+      <div class="loading-ring r1"></div>
+      <div class="loading-ring r2"></div>
+      <div class="loading-ring r3"></div>
+      <div class="loading-core"></div>
+    </div>
+    <div class="loading-text" id="loadText">正在解析你的人格数据</div>
+    <div class="loading-sub">匹配 20 位英雄中...</div>
+  </div>
+</div>
+
+<!-- ==================== 结果页 ==================== -->
+<div class="page" id="pageResult">
+  <div class="result">
+    <div class="result-hero" id="rHero"></div>
+
+    <div class="card">
+      <div class="card-title">六维人格雷达<span class="en">PERSONALITY RADAR</span></div>
+      <div class="radar-wrap"><canvas id="radarCanvas"></canvas></div>
+      <div class="dim-list" id="dimList"></div>
+    </div>
+
+    <div class="card" id="rPortrait"></div>
+    <div class="card" id="rPartner"></div>
+    <div class="card" id="rPosition"></div>
+    <div class="card" id="rStrength"></div>
+    <div class="card" id="rAdvice"></div>
+    <div class="card" id="rSummary"></div>
+
+    <div class="result-actions">
+      <button class="result-btn secondary" onclick="restartQuiz()">重新测试</button>
+      <button class="result-btn primary" onclick="shareResult()">分享结果</button>
+    </div>
+    <p class="watermark">王者人格测试 WZTI · 仅供娱乐</p>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ==================================================================
+//  题库：30 道生活 / 虚拟情景题
+//  维度顺序：勇气 / 谋略 / 忠诚 / 进攻性 / 团队性 / 独立性
+// ==================================================================
+const QUESTIONS = [
+{scene:"你和朋友一起爬山，走到半山腰时，一位朋友崴了脚，站都站不稳。天色开始变暗，手机信号时有时无。",options:[
+{t:"让他原地休息保存体力，你快速下撤求援，这是最稳妥的办法",d:[2,3,2,0,2,3]},
+{t:"背起他慢慢往下走，虽然慢，但绝不会把他一个人留下",d:[3,1,3,1,3,1]},
+{t:"让其他体力好的人先下山求救，你留下来陪他，生火保暖",d:[2,2,3,0,3,0]},
+{t:"大家一起想办法，分散找路，争取天黑前一起走出去",d:[2,1,2,2,2,1]}
+]},
+{scene:"团队项目临近截止，你发现有一位成员的任务明显拖了后腿，但他一直没吭声，也没求助。",options:[
+{t:"私下找他聊，了解他遇到的困难，看能不能一起解决",d:[1,2,3,0,3,1]},
+{t:"直接告诉负责人，让负责人来协调处理",d:[0,2,1,1,3,1]},
+{t:"自己加班把他的部分补上，先保证项目能交付",d:[1,1,2,0,3,2]},
+{t:"不管，做好自己的部分，谁的问题谁负责",d:[0,1,0,1,0,3]}
+]},
+{scene:"深夜独自走在回家的路上，你注意到身后有个人一直和你保持着不远不近的距离。",options:[
+{t:"加快脚步，走进路边还在营业的便利店，观察情况",d:[1,3,0,0,0,3]},
+{t:"突然转身直面他，大声问“你跟着我干什么”",d:[3,0,0,3,0,2]},
+{t:"掏出手机装作打电话，大声说“我马上到了，你在路口等我”",d:[1,3,0,0,0,3]},
+{t:"走到马路对面，改变路线，绕到人多的地方去",d:[1,2,0,0,0,3]}
+]},
+{scene:"一个关系不错的朋友向你借钱，数目不小，但他没有说具体用途。",options:[
+{t:"直接借，朋友之间不用问那么多",d:[1,0,3,0,2,1]},
+{t:"问他用途，如果合理就借，并且说好还款时间",d:[0,3,2,0,2,2]},
+{t:"委婉拒绝，说自己最近手头也紧张",d:[0,2,1,0,1,2]},
+{t:"借一部分，既帮了忙也不会让自己太被动",d:[0,3,2,0,2,2]}
+]},
+{scene:"你辛苦做了两周的方案，在会议上被同事用几乎一样的说法讲了出来，领导还当众表扬了他。",options:[
+{t:"当场补充说明，把方案的细节和思路讲清楚",d:[3,2,0,3,1,2]},
+{t:"会后私下找领导说明情况",d:[1,3,1,1,1,2]},
+{t:"什么都不说，下次注意保留证据",d:[0,2,0,0,1,3]},
+{t:"直接找那位同事对质，把话说清楚",d:[3,0,0,3,0,2]}
+]},
+{scene:"期待已久的旅行，出发当天航班取消了，下一班要等两天。",options:[
+{t:"立刻查其他交通方式，高铁、大巴、拼车都看看",d:[2,3,0,2,1,3]},
+{t:"改签航班，在机场附近住两天，顺便玩一下这个城市",d:[1,2,0,0,1,3]},
+{t:"取消行程，下次再说，反正也不是非去不可",d:[0,1,0,0,0,2]},
+{t:"找同行的人商量，看大家怎么想",d:[0,1,2,0,3,1]}
+]},
+{scene:"一位你很敬重的长辈给你介绍了一个工作机会，但那个城市你完全不想去。",options:[
+{t:"直接婉拒，说明自己的想法",d:[2,2,1,1,1,3]},
+{t:"先答应下来，去看看再说，说不定会喜欢",d:[2,1,2,0,2,1]},
+{t:"委婉推脱，说再考虑考虑，先拖着",d:[0,2,1,0,1,2]},
+{t:"接受，长辈的眼光不会错，去了再调整",d:[1,1,3,0,2,0]}
+]},
+{scene:"聚会上，一个不太熟的人当众拿你的短处开玩笑，周围人都在笑。",options:[
+{t:"笑着接梗，把话题引开",d:[1,2,1,0,3,1]},
+{t:"平静地说“这个玩笑我不太喜欢”，然后换话题",d:[2,3,1,1,2,3]},
+{t:"当场怼回去，让他也下不来台",d:[3,0,0,3,0,2]},
+{t:"不理会，继续做自己的事，心里记下这个人",d:[0,2,0,0,0,3]}
+]},
+{scene:"下班路上，你看到有人在街头推搡一位老人，周围人都在看，但没人上前。",options:[
+{t:"立刻上前制止，哪怕可能有风险",d:[3,0,1,3,1,2]},
+{t:"先报警，同时大声喊“我已经报警了”，震慑对方",d:[2,3,1,1,1,2]},
+{t:"拍下视频作为证据，然后报警",d:[1,3,0,0,0,3]},
+{t:"找附近店家或保安一起过去",d:[2,2,1,0,3,1]}
+]},
+{scene:"你要做一个重要决定，但手上的信息只有七成，而机会窗口只剩三天。",options:[
+{t:"三天内尽可能补齐信息，然后果断决定",d:[2,3,0,2,1,2]},
+{t:"先做，边做边调整，机会不等人",d:[3,1,0,3,1,2]},
+{t:"放弃这次机会，等下一个更确定的",d:[0,2,0,0,1,2]},
+{t:"找信任的人一起商量，听听不同意见",d:[0,2,2,0,3,1]}
+]},
+{scene:"凌晨两点，失恋的朋友给你打电话，哭得说不出话。",options:[
+{t:"立刻出门去找他，陪他坐着",d:[2,0,3,0,3,0]},
+{t:"在电话里陪他聊，直到他情绪稳定下来",d:[1,1,3,0,3,1]},
+{t:"劝他早点睡，明天就好了，然后挂电话",d:[0,1,1,0,1,2]},
+{t:"让他来你家住几天，换个环境",d:[2,0,3,0,3,0]}
+]},
+{scene:"你发现自己之前的一个失误，导致团队损失了一个重要客户。",options:[
+{t:"第一时间向团队和领导说明，承担责任",d:[3,2,2,1,3,1]},
+{t:"先想办法补救，看能不能挽回，再报告",d:[2,3,1,2,2,2]},
+{t:"尽量淡化这件事，希望没人注意到",d:[0,1,0,0,0,2]},
+{t:"承认错误，同时提出改进方案防止再犯",d:[2,3,2,1,3,2]}
+]},
+{scene:"有人在你面前说你最好的朋友坏话，而且是你并不认同的内容。",options:[
+{t:"当场反驳，把事实说清楚",d:[3,1,3,3,1,2]},
+{t:"不接话，转移话题，事后告诉朋友",d:[1,2,3,0,2,2]},
+{t:"听他说完，回去再判断真假",d:[0,3,1,0,1,3]},
+{t:"直接怼回去，并且减少和这个人的来往",d:[3,0,2,3,0,2]}
+]},
+{scene:"你坚持了两年的目标，最近半年完全没有进展，你开始怀疑这条路是不是从一开始就错了。",options:[
+{t:"停下来复盘，找问题到底出在哪里",d:[0,3,1,0,1,3]},
+{t:"找走过这条路的人请教经验",d:[0,2,1,0,3,1]},
+{t:"再坚持一年，如果还不行就换",d:[3,1,1,1,0,3]},
+{t:"换一条路，沉没成本不该绑架未来",d:[1,3,0,1,1,3]}
+]},
+{scene:"你和最好的朋友在一个重要问题上观点完全相反，谁也说服不了谁。",options:[
+{t:"坚持自己的观点，理性讨论到底",d:[2,2,1,3,1,3]},
+{t:"各退一步，求同存异，不影响感情",d:[0,3,3,0,3,1]},
+{t:"尊重他的选择，但按自己的想法做",d:[1,2,1,1,1,3]},
+{t:"回避这个话题，以后再聊",d:[0,1,2,0,2,1]}
+]},
+{scene:"你意外得到了一笔钱，数目刚好够你实现一个一直以来的愿望，也够你解决眼下的现实压力。",options:[
+{t:"实现愿望，人生要及时行乐",d:[2,0,0,2,0,3]},
+{t:"先解决现实压力，愿望以后再说",d:[0,3,1,0,2,2]},
+{t:"一半一半，都兼顾一点",d:[0,2,1,0,2,2]},
+{t:"先存起来，不急着做决定",d:[0,2,0,0,1,3]}
+]},
+{scene:"你在一个语言不通的陌生城市迷路了，手机也没电了。",options:[
+{t:"用肢体语言向路人求助",d:[2,1,0,1,2,2]},
+{t:"记住标志性建筑，凭方向感找回去",d:[2,2,0,1,0,3]},
+{t:"找警察或者便利店店员帮忙",d:[0,2,0,0,2,2]},
+{t:"走进一家餐厅，点个东西顺便充电问路",d:[1,3,0,0,2,2]}
+]},
+{scene:"面试时，面试官问你“你最大的缺点是什么”。",options:[
+{t:"坦诚说一个真实的缺点，以及你正在怎么改进",d:[2,3,1,0,2,2]},
+{t:"说一个包装过的“缺点”，比如“太追求完美”",d:[0,2,0,0,2,1]},
+{t:"反问面试官，您觉得这个岗位最需要克服的缺点是什么",d:[2,3,0,1,2,3]},
+{t:"避开这个问题，讲自己的优势",d:[1,1,0,2,1,2]}
+]},
+{scene:"朋友邀请你参加一个你完全不感兴趣的聚会，但你不想扫兴。",options:[
+{t:"去，朋友开心最重要",d:[0,0,3,0,3,0]},
+{t:"婉拒，说清楚自己不太喜欢这种场合",d:[1,2,2,0,2,3]},
+{t:"去待一会儿，然后找借口提前走",d:[0,2,2,0,2,2]},
+{t:"提出换个你喜欢的活动，大家一起改计划",d:[2,2,1,2,2,2]}
+]},
+{scene:"你无意中听到同事在讨论你，说的话和你对自己的认知完全不一样。",options:[
+{t:"认真听下去，看看别人眼中的自己是什么样",d:[0,3,0,0,1,3]},
+{t:"直接走进去，问他们在说什么",d:[3,1,0,2,1,2]},
+{t:"不听，别人的看法不重要",d:[1,1,0,1,0,3]},
+{t:"找个信任的人聊聊，问问自己是不是真的这样",d:[0,2,2,0,3,1]}
+]},
+{scene:"你在一个领域做了很久，突然遇到一个天赋极高的新人，进步速度远超你。",options:[
+{t:"主动和他交流，学习他的方法",d:[0,3,1,0,2,2]},
+{t:"加倍努力，用时间补天赋",d:[3,1,0,2,0,3]},
+{t:"换个赛道，找他没优势的方向",d:[1,3,0,1,1,3]},
+{t:"无所谓，我只和自己比",d:[0,2,0,0,0,3]}
+]},
+{scene:"室友生病了，发烧躺在床上，而你明天有一个很重要的会议。",options:[
+{t:"照顾他一晚，会议的事再想办法",d:[1,0,3,0,3,0]},
+{t:"先给他买好药和吃的，交代好，然后去休息",d:[0,2,3,0,3,1]},
+{t:"帮他叫个外卖和跑腿买药，自己照常休息",d:[0,3,2,0,2,2]},
+{t:"建议他去医院或者联系他的家人",d:[1,2,1,0,1,3]}
+]},
+{scene:"会议上，领导突然点名让你即兴发言，你完全没有准备。",options:[
+{t:"直接说，想到什么说什么",d:[3,0,0,2,1,2]},
+{t:"先花十秒整理框架，然后分三点讲",d:[1,3,0,0,2,2]},
+{t:"说“我先听听大家的”，把机会让出去",d:[0,2,1,0,3,1]},
+{t:"坦诚说没准备，但分享一个最近的想法",d:[2,2,1,0,2,2]}
+]},
+{scene:"你所在的团队要做一个决定，你是唯一一个持反对意见的人。",options:[
+{t:"坚持表达自己的观点，把理由讲透",d:[3,3,0,3,1,3]},
+{t:"表达一次，如果没人认同就服从多数",d:[1,2,2,0,3,1]},
+{t:"保留意见，全力配合团队执行",d:[0,1,3,0,3,0]},
+{t:"会后私下找负责人再沟通一次",d:[1,3,2,0,2,2]}
+]},
+{scene:"一个关系一般的朋友请你帮一个大忙，这件事会让你很为难。",options:[
+{t:"直接拒绝，说明自己做不到",d:[2,2,1,2,1,3]},
+{t:"答应，尽力去做，朋友开口不容易",d:[1,0,3,0,3,0]},
+{t:"帮一部分，量力而行",d:[0,2,2,0,2,2]},
+{t:"拖着，希望他自己放弃",d:[0,1,1,0,1,2]}
+]},
+{scene:"你花了很大心血做的东西，被一句“不行，重做”就否定了，对方没给具体理由。",options:[
+{t:"追问具体哪里不行，要一个明确的反馈",d:[2,3,1,2,2,2]},
+{t:"回去自己重新审视，找问题",d:[0,3,1,0,1,3]},
+{t:"心里不服，但还是重做",d:[0,1,2,0,2,1]},
+{t:"换个角度想，也许对方看到了我没看到的",d:[0,3,2,0,2,2]}
+]},
+{scene:"在团队合作中，你做了很多关键工作，但最后汇报时，功劳都被算在了别人头上。",options:[
+{t:"当场补充，把自己的贡献说清楚",d:[3,2,0,3,1,2]},
+{t:"私下和负责人沟通",d:[1,3,1,1,1,2]},
+{t:"不在意，事情做成了就行",d:[0,1,2,0,3,0]},
+{t:"下次不再和这个人合作",d:[1,1,0,1,0,3]}
+]},
+{scene:"你要在两个机会之间做选择：一个是稳定但没有挑战的，一个是有风险但可能改变人生的。",options:[
+{t:"选有风险的，人生就该搏一把",d:[3,1,0,3,0,3]},
+{t:"选稳定的，先活下来才有资格谈梦想",d:[1,3,1,0,2,2]},
+{t:"想办法两个都要，先稳后搏",d:[2,3,0,1,2,3]},
+{t:"问问家人和朋友的意见再做决定",d:[0,1,3,0,3,1]}
+]},
+{scene:"你在坚持一件事，但已经很久没有看到回报了，身边的人都劝你放弃。",options:[
+{t:"继续坚持，我相信我的判断",d:[3,1,1,2,0,3]},
+{t:"设定一个最后期限，到点还没结果就放弃",d:[1,3,0,0,1,3]},
+{t:"听听劝你放弃的人的理由，再决定",d:[0,3,1,0,2,2]},
+{t:"调整方法，而不是放弃目标",d:[1,3,0,1,1,3]}
+]},
+{scene:"最后一题：你希望多年以后，认识你的人怎么评价你？",options:[
+{t:"“他很有勇气，敢做别人不敢做的事”",d:[3,0,0,3,0,3]},
+{t:"“他很聪明，总能看到别人看不到的东西”",d:[0,3,0,0,1,3]},
+{t:"“他很好，对身边的人都特别好”",d:[0,0,3,0,3,0]},
+{t:"“他很可靠，答应的事一定会做到”",d:[1,1,3,0,3,0]}
+]}
+];
+
+// ==================================================================
+//  英雄数据（20 位，最佳搭档完全对称）
+// ==================================================================
+const HEROES = [
+{name:"赵云",id:107,title:"常山赵子龙 · 心怀不惧的枪士",quote:"心怀不惧，方能翱翔于天际。",
+traits:["勇敢","担当","忠诚","行动派"],
+portrait:"你是那种在关键时刻会站出来的人。无论是游戏还是生活，你都不会在困难面前退缩。你的勇气不是莽撞，而是建立在充分准备之上的果断。你相信行动比语言更有力量，面对挑战时，你倾向于直接面对而非迂回。你有一种天然的领袖气质，但你的领导方式是以身作则，而不是发号施令。你重视承诺，一旦答应了别人的事，就会全力以赴。",
+strength:"关键时刻从不掉链子，是团队里最可靠的那根支柱。你的存在会让身边的人感到安心，因为你总是在最需要的时候出现。",
+weakness:"习惯了独自扛下一切，容易忽略自己也需要被照顾。你总说“没事”，但并不是真的没事。",
+advice:"你的勇敢是最大的优势，但有时候也需要学会倾听他人的意见。不是所有问题都需要你一个人扛，学会在适当的时候寻求帮助，会让你的路走得更远。在团队中，尝试多表达自己的想法，让别人更好地理解你的判断逻辑。",
+partnerName:"张飞",partnerId:171,partnerReason:"你冲锋在前，他守护在后。一个敢冲，一个敢保，你们在一起就是团队最坚固的防线。",
+position:"对抗路 / 打野",positionDesc:"适合承担压力、打开局面的位置。你不需要别人给你创造机会，你自己就是机会的制造者。",
+hidden:"嘴上说着“随便都行”，心里其实特别在意结果。",
+summary:"你不是最强的那个，但你是最让人放心的那个。"},
+
+{name:"诸葛亮",id:190,title:"卧龙先生 · 运筹帷幄的智者",quote:"运筹帷幄之中，决胜千里之外。",
+traits:["谋略","冷静","前瞻","掌控"],
+portrait:"你是一个天生的策略家。你习惯于在做任何决定之前，先在脑海中推演各种可能性。你不喜欢冲动行事，而是相信周密的分析和计划能带来最好的结果。你有一种超乎常人的耐心，愿意花时间去研究规律和模式。在团队中，你往往是那个提供方向的人，你的价值不在于个人的操作有多华丽，而在于你能让整个团队的效率最大化。",
+strength:"能在混乱中看到秩序，在别人慌乱时给出方向。你的判断力是一种稀缺资源。",
+weakness:"太习惯用理性处理一切，偶尔会错过那些需要感性回应的时刻。",
+advice:"你的理性思维非常强大，但有时候过于追求最优解会让你错失一些机会。试着在“完美”和“可行”之间找到平衡。另外，你可能会给人一种距离感，适当表露一些真实情绪，会让你的人际关系更加顺畅。",
+partnerName:"大乔",partnerId:191,partnerReason:"你布局全局，她调度节奏。你们的配合像一台精密仪器，不需要多余的语言。",
+position:"中路 / 指挥位",positionDesc:"适合掌控全局、制定策略的位置。你的价值不在于做了多少，而在于让所有人都做对了。",
+hidden:"分析别人的时候头头是道，分析自己的时候一塌糊涂。",
+summary:"你看得比别人远，所以也比别人更容易孤独。"},
+
+{name:"韩信",id:116,title:"国士无双 · 独来独往的猎手",quote:"弱者，才在乎耻辱。",
+traits:["独立","敏锐","灵活","不羁"],
+portrait:"你是一个极度独立的人。你不喜欢被束缚，也不喜欢按照别人的节奏行事。你有自己独特的判断标准和行事风格，别人很难真正影响你的决定。你有一种敏锐的直觉，能够快速捕捉到环境和局势的变化，并据此调整自己的策略。你不在乎别人的评价，你只在乎自己是否做到了自己想做的事。",
+strength:"极强的独立作战能力和敏锐的局势嗅觉。你总能在别人还没反应过来的时候，已经找到突破口。",
+weakness:"过于独立会让你在需要协作时显得疏离，别人很难走进你的世界。",
+advice:"你的独立性让你在个人表现上非常出色，但在需要协作的场景中，你的这种特质可能会让你显得不太合群。尝试在保持自我的同时，也给团队留出一些空间。有时候，适当的妥协不是软弱，而是一种更高层次的智慧。",
+partnerName:"孙膑",partnerId:152,partnerReason:"他给你加速，你给他结果。你们之间不需要多余的沟通，一个眼神就够了。",
+position:"打野 / 自由人",positionDesc:"适合独立作战、自己找机会的位置。你不需要别人给你铺路，你自己就是路。",
+hidden:"看起来谁都不需要，其实只是还没遇到值得停下的人。",
+summary:"你不是不合群，你只是不愿意为了合群而委屈自己。"},
+
+{name:"张飞",id:171,title:"燕人张翼德 · 无声的守护者",quote:"谁敢与我决一死战！",
+traits:["忠诚","守护","可靠","隐忍"],
+portrait:"你是那种默默付出、不求回报的人。你不会去争夺聚光灯下的位置，但你做的事情对整个团队至关重要。你有极强的责任感和忠诚心，一旦认定了某个人或某件事，你就会一直坚守下去。你不善于表达自己的情感，但你的行动比任何语言都更有说服力。你的力量不在于进攻，而在于守护。",
+strength:"你的存在本身就是队友的安全感。你在，大家就敢打；你不在，大家就会犹豫。",
+weakness:"总把自己放在最后，时间久了会忘了自己到底想要什么。",
+advice:"你总是把别人的需求放在自己前面，但有时候也需要关注一下自己的感受。你的付出值得被看见，不要害怕表达自己的需求。在团队中，你不仅是守护者，也可以成为发声者，你的意见同样重要。",
+partnerName:"赵云",partnerId:107,partnerReason:"他在前面顶伤害，你在后面顶住所有人。没有你他敢冲，没有他你护不住。",
+position:"游走 / 辅助",positionDesc:"适合保护队友、承担伤害的位置。你的价值不在数据面板上，而在每一次队友活下来的瞬间。",
+hidden:"嗓门最大的人，往往心最软。",
+summary:"你不站在光里，但你让站在光里的人不再害怕。"},
+
+{name:"李白",id:131,title:"青莲剑仙 · 自由的浪漫主义者",quote:"可以赶尽，无法杀绝。",
+traits:["潇洒","才华","自由","浪漫"],
+portrait:"你是一个追求自由和美感的人。你的生活态度是“不将就”，无论是在游戏中选择英雄还是现实中的生活方式，你都有自己的审美标准。你有出色的才华和创造力，但你不会为了迎合别人而改变自己。你喜欢在规则允许的范围内找到自己的表达方式，你的存在本身就是一种态度。",
+strength:"不可替代的个人风格和创造力。你做的事情，别人模仿不来。",
+weakness:"太过自由会让人觉得你不够可靠，有时候别人需要的是确定性。",
+advice:"你的才华和个性是你的魅力所在，但有时候过于追求独特可能会让你错失一些合作机会。学会在保持个性的同时与他人建立连接，会让你的才华被更多人看见。另外，给自己设定一些阶段性目标，会让你的自由不那么漫无目的。",
+partnerName:"曜",partnerId:522,partnerReason:"两个都爱自由的人凑在一起，反而谁都拦不住谁。你们互相点燃，也互相兜底。",
+position:"打野 / 自由人",positionDesc:"适合需要灵感和创造力的位置。你不适合被规则框住，你适合自己定义规则。",
+hidden:"看似随性，其实对认定的事有近乎偏执的坚持。",
+summary:"你不是不合规矩，你只是活在自己的规矩里。"},
+
+{name:"花木兰",id:154,title:"传说之刃 · 刚柔并济的战士",quote:"谁说女子不如男？",
+traits:["坚韧","适应","担当","不认输"],
+portrait:"你是一个适应性极强的人。无论环境怎么变化，你都能迅速调整自己并找到最适合的应对方式。你有两种截然不同的面貌：在需要进攻时你果断凌厉，在需要防守时你沉稳可靠。你不喜欢被人定义，你相信自己的实力可以打破任何偏见。你有一种不服输的精神，越是困难的事情，你越想去征服。",
+strength:"适应力极强，能在任何环境下找到自己的位置。别人还在适应，你已经开始了。",
+weakness:"长期扮演强者，会让你忘记自己也可以示弱。",
+advice:"你的适应力是你最大的武器，但有时候过度切换状态会让你感到疲惫。允许自己有“只做自己”的时刻，不需要时刻保持战斗状态。另外，你可能会对自己要求过高，记得给自己留一些喘息的空间。",
+partnerName:"铠",partnerId:193,partnerReason:"两个都能扛的人在一起，队伍就几乎没有崩盘的可能。你们互相兜底，互相成就。",
+position:"对抗路 / 全能位",positionDesc:"适合需要兼顾攻防的位置。你不需要被固定在一个角色里，你本身就是多面手。",
+hidden:"越是被低估，越能爆发出惊人的能量。",
+summary:"你不需要向任何人证明什么，但你就是想证明。"},
+
+{name:"貂蝉",id:141,title:"绝世舞姬 · 以柔克刚的舞者",quote:"华丽又优雅，只可远观。",
+traits:["优雅","韧性","灵活","内核强大"],
+portrait:"你是一个外柔内刚的人。你的外表可能给人一种温和甚至柔弱的感觉，但你的内心有着极其强大的韧性。你擅长在复杂的局面中找到自己的节奏，像跳舞一样优雅地应对各种挑战。你不喜欢正面对抗，更倾向于用巧妙的走位和节奏掌控来化解危机。你的美不仅仅是外在的，更是一种内在的力量。",
+strength:"在压力下依然能保持优雅和精准。别人慌乱的时候，你反而更清醒。",
+weakness:"太擅长忍耐，容易把委屈攒成内伤。",
+advice:"你的韧性让你能在逆境中坚持下来，但有时候过于隐忍会让你忽视自己的真实感受。学会在适当的时候说“不”，不是所有事情都需要你优雅地承受。另外，你的社交能力很强，可以利用这一优势建立更广泛的人脉网络。",
+partnerName:"元歌",partnerId:125,partnerReason:"两个都复杂、都聪明的人，反而在彼此面前最简单。你们不用装，因为对方一眼就看穿了。",
+position:"中路 / 核心输出",positionDesc:"适合需要细腻操作和节奏感的位置。你不靠蛮力取胜，你靠的是让对方永远慢你半拍。",
+hidden:"温柔是外壳，内核比谁都硬。",
+summary:"你以为我在退，其实我只是在找最好的角度。"},
+
+{name:"铠",id:193,title:"破灭刃锋 · 孤独的守护者",quote:"一个人可以被毁灭，但绝不会被打败。",
+traits:["坚毅","孤独","守护","纯粹"],
+portrait:"你是一个内心极其坚定的人。你不害怕孤独，甚至某种程度上享受独处。你有自己的一套价值观和原则，不会因为外界的压力而改变。你在别人眼中可能显得有些冷峻，但你内心深处有着强烈的保护欲——你想守护的东西，你会不惜一切代价去守护。你的力量来源于你的信念，而不是外界的认可。",
+strength:"极强的意志力和守护他人的决心。你认定的事，九头牛都拉不回来。",
+weakness:"过度封闭自己，会让关心你的人无从下手。",
+advice:"你的坚定和纯粹是难得的品质，但有时候过于封闭自己会让你错过一些温暖。试着让信任的人走进你的世界，分享你的感受。你不需要一个人扛所有的事情。在团队中，你的存在本身就是一种安全感，但别忘了你也可以成为被保护的那个人。",
+partnerName:"花木兰",partnerId:154,partnerReason:"你不怕死，她不怕累。一个守，一个攻，你们在一起就是最硬的那块盾。",
+position:"对抗路",positionDesc:"适合独自承担压力的位置。你不需要太多支援，因为你自己就是一道防线。",
+hidden:"冷脸背后，藏着最深的温柔。",
+summary:"我不说，不代表我不在乎；我只是习惯用行动说话。"},
+
+{name:"鲁班七号",id:112,title:"机关造物 · 天真又强大的存在",quote:"智商二百五，帅得被人砍。",
+traits:["纯粹","专注","可爱","潜力"],
+portrait:"你是一个心思纯粹的人。你不会去算计别人，也不会在复杂的人际关系中迷失自己。你对喜欢的事情有着极高的专注度，能够沉浸其中忘记时间。你可能在某些方面显得“不成熟”，但正是这种不被世俗污染的纯粹，让你能看到别人看不到的可能性。你的潜力是巨大的，一旦你找到了自己的方向，你会爆发出惊人的能量。",
+strength:"专注力惊人，能在自己的世界里做到极致。你的纯粹本身就是一种力量。",
+weakness:"对外界的复杂有些迟钝，容易在人际关系里吃亏。",
+advice:"你的纯粹是宝贵的，但社会并不是一个完全纯粹的环境。学会保护自己的同时，也慢慢培养一些人际交往的技巧。不要因为别人的评价而否定自己，你的价值不需要用别人的标准来衡量。",
+partnerName:"蔡文姬",partnerId:184,partnerReason:"她给你最温暖的后盾，你给她最漂亮的胜利。你保护她的纯粹，她回报你的付出。",
+position:"发育路 / 核心输出",positionDesc:"适合专注输出、被保护的位置。你不需要操心太多，把一件事做到极致就够了。",
+hidden:"看起来最没心机，其实是最纯粹的聪明。",
+summary:"我可能不懂人情世故，但我懂我在做的事。"},
+
+{name:"弈星",id:197,title:"天元之弈 · 步步为营的布局者",quote:"不得贪胜，不可不胜。",
+traits:["冷静","规划","耐心","大局观"],
+portrait:"你是一个善于长线思考的人。你不会被眼前的得失所困扰，而是习惯于从更长远的角度来看待问题。你有极强的规划能力，能够把复杂的目标分解成可执行的步骤。你做事有条不紊，不喜欢冒险，但你的每一步棋都是为了最终的胜利。你的耐心是很多人不具备的品质。",
+strength:"长线思维和超强的耐心。你能忍住别人忍不住的寂寞，所以你也能得到别人得不到的东西。",
+weakness:"过于谨慎会让你错过一些本该属于你的机会。",
+advice:"你的长远规划能力很强，但有时候过于谨慎会让你错过一些需要快速决策的机会。学会在“稳”和“快”之间灵活切换。另外，你可能会因为过于关注大局而忽略了身边人的感受，多关注一些细节上的人际互动。",
+partnerName:"镜",partnerId:504,partnerReason:"你们都在下一盘很大的棋，只是棋子不同。彼此都懂，不需要多解释。",
+position:"中路 / 运营核心",positionDesc:"适合需要全局思维的位置。你不追求一时的爆发，你追求的是让对方慢慢走进你的节奏。",
+hidden:"看似无欲无求，其实每一步都在计算之内。",
+summary:"我不急，因为我知道最后赢的一定是我。"},
+
+{name:"马超",id:194,title:"冷晖之枪 · 速度与激情的化身",quote:"即使敌众我寡，末将亦能万军丛中取敌将首级。",
+traits:["速度","果敢","自信","执行力"],
+portrait:"你是一个行动力极强的人。你讨厌拖泥带水，喜欢快速做决定并立刻执行。你的思维和行动都很快，能够在短时间内处理大量信息并做出判断。你有一种不服输的竞争意识，喜欢在压力下展现自己的实力。你的自信不是盲目的，而是建立在你对自己能力的清晰认知之上。",
+strength:"执行力极强，决定了就立刻行动。别人还在犹豫，你已经跑出去很远了。",
+weakness:"太快的节奏会让身边的人跟不上你，有时候你需要回头看看。",
+advice:"你的速度是你最大的优势，但有时候慢下来也是一种智慧。不是所有事情都需要立刻解决，给自己一些思考和沉淀的时间。在团队中，你的节奏可能会让队友跟不上，尝试多考虑一下团队的配合度。",
+partnerName:"项羽",partnerId:108,partnerReason:"你负责撕开缺口，他负责堵上后方。一个速度，一个厚重，天作之合。",
+position:"对抗路 / 游走",positionDesc:"适合需要快速支援、不断施压的位置。你不适合原地等待，你需要一直在路上。",
+hidden:"速度是保护色，慢下来的时候反而会不知所措。",
+summary:"我不是在赶路，我是在享受奔跑本身。"},
+
+{name:"大乔",id:191,title:"沧海之曜 · 掌控节奏的幕后核心",quote:"守望着天空、大海和你的回忆。",
+traits:["全局观","掌控","沉稳","幕后"],
+portrait:"你是一个天生的全局掌控者。你的视野不局限于眼前的一亩三分地，你总是能看到更大的图景。你擅长在幕后运筹帷幄，让整个团队的运转更加高效。你有一种沉稳的气质，在混乱中能够保持冷静并做出正确的决策。你的价值往往不那么直观，但缺少了你，整个体系就会运转不畅。",
+strength:"全局视野和让团队运转更高效的能力。你是那个让所有人变得更好的人。",
+weakness:"太关注整体，容易忽略自己的感受。",
+advice:"你的全局观和掌控力非常出色，但有时候你可能会因为太关注整体而忽略了自己的需求。记住，照顾好自己也是维持全局的一部分。另外，学会让别人也参与到决策中来，会让你的团队更有凝聚力。",
+partnerName:"诸葛亮",partnerId:190,partnerReason:"你铺路，他布阵。一个决定什么时候打，一个决定在哪打。这就是最高级的默契。",
+position:"游走 / 节奏核心",positionDesc:"适合调度全局、串联队友的位置。你的价值不在于你做了什么，而在于你让别人能做什么。",
+hidden:"掌控全局的人，往往最孤独。",
+summary:"我不在聚光灯下，但聚光灯照到哪里，是我决定的。"},
+
+{name:"项羽",id:108,title:"西楚霸王 · 不屈的战魂",quote:"天不容我，我必逆天！",
+traits:["霸气","不屈","义气","领导力"],
+portrait:"你是一个天生的领袖。你的气场和决断力让周围的人不自觉地信任你、追随你。你有极强的荣誉感和正义感，不容忍不公平的事情发生在自己或朋友身上。你面对困难时的态度是“越挫越勇”，越是逆境你越能爆发出强大的力量。你的原则性很强，认定的东西不会轻易改变。",
+strength:"天生的领导力和让人信服的气场。你在，大家就有主心骨。",
+weakness:"太要强会让你难以接受自己也有做不到的事。",
+advice:"你的领导力和义气让你赢得很多人的尊重，但有时候你的强势可能会让身边的人感到压力。学会倾听和授权，不是所有事情都需要你亲自冲在前面。另外，适当展现你的脆弱面，会让你的形象更加立体和可信。",
+partnerName:"马超",partnerId:194,partnerReason:"你在前面挡，他在前面冲。一个不怕死，一个不认输，这就是最好的搭档。",
+position:"对抗路 / 辅助",positionDesc:"适合冲在最前面、承担压力的位置。你不怕受伤，你怕的是身后的人受伤。",
+hidden:"霸气的另一面，是怕辜负别人的期待。",
+summary:"我可以输，但我不能退。"},
+
+{name:"兰陵王",id:153,title:"暗影猎手 · 沉默的致命一击",quote:"替你的生命倒数。",
+traits:["神秘","耐心","精准","威慑"],
+portrait:"你是一个不喜欢张扬的人。你更愿意在暗处观察和分析，等待最佳的时机再出手。你有极强的耐心和自控力，能够在别人急躁的时候保持冷静。你的判断力非常精准，一旦决定了目标，就会毫不犹豫地执行。你不需要别人的认可来证明自己的价值，你的自信来源于对自己能力的绝对信任。",
+strength:"精准的判断和极强的耐心。你能等到别人等不到的那个瞬间。",
+weakness:"太神秘会让人觉得难以接近，别人不知道你在想什么。",
+advice:"你的沉默和精准是你的力量，但有时候过于神秘会让人觉得难以接近。试着在适当的时候展现真实的自己，让别人看到你沉默背后的温度。在团队中，你的存在本身就是一种威慑，但也可以多与队友沟通你的判断，让他们更好地配合你。",
+partnerName:"狂铁",partnerId:199,partnerReason:"他在明处吸引火力，你在暗处一击致命。配合起来，对面永远不知道为什么打不过。",
+position:"打野 / 刺客",positionDesc:"适合隐蔽行动、关键时刻出手的位置。你不适合一直暴露在视野里，你适合在暗处等待。",
+hidden:"沉默不是冷漠，是把所有话都留给了行动。",
+summary:"你不需要看见我，你只需要知道我在。"},
+
+{name:"孙膑",id:152,title:"逆流之时 · 温柔的辅助核心",quote:"时间和波浪，变化无常。",
+traits:["温柔","智慧","辅助","安静"],
+portrait:"你是一个温柔而智慧的人。你不需要站在最前面，但你的存在让整个团队变得更好。你有一种独特的洞察力，能够感知到别人的需求并提前做好准备。你不喜欢冲突，更倾向于用温和的方式解决问题。你的智慧不是用来炫耀的，而是用来帮助他人的。你相信“成就别人就是成就自己”。",
+strength:"对他人需求的敏锐感知和无私的付出。你总能在别人开口之前，就已经准备好了。",
+weakness:"太习惯成全别人，容易忽略自己的价值。",
+advice:"你的温柔和付出是珍贵的，但不要因此而忽视了自己的价值。你不需要总是退居幕后，你的能力和见解同样值得被看见。在人际关系中，学会接受别人的帮助和关心，你也有被照顾的权利。",
+partnerName:"韩信",partnerId:116,partnerReason:"你的每一个加速，都是他的高光时刻。你不抢镜，但每一个镜头里都有你的功劳。",
+position:"游走 / 辅助",positionDesc:"适合观察全局、辅助队友的位置。你的价值不在击杀数，而在每一场胜利里。",
+hidden:"最安静的人，往往看得最清楚。",
+summary:"我不需要站在前面，因为我知道，胜利里有我的一份。"},
+
+{name:"曜",id:522,title:"星辰之子 · 自信的追光者",quote:"仰望星空，那是梦想的方向。",
+traits:["自信","乐观","行动力","少年感"],
+portrait:"你是一个充满活力和自信的人。你有一种天然的乐观主义精神，无论遇到什么困难都能保持积极的心态。你相信努力可以改变一切，也愿意为了目标付出行动。你身上有一种“少年感”——不是年龄上的年轻，而是一种对世界保持好奇和热情的态度。你可能会被一些人认为“太吵”或“太张扬”，但这就是你。",
+strength:"感染他人的热情和不服输的劲头。你在的地方，气氛就不会冷。",
+weakness:"热情来得快去得也快，需要学会把一时的冲动变成长久的坚持。",
+advice:"你的自信和乐观会感染身边的人，但也要注意在适当的场合收敛一下。不是所有人都能跟上你的节奏，学会观察别人的状态。另外，你的热情来得快去得也快，尝试把热情转化为持续的行动力，会让你走得更远。",
+partnerName:"李白",partnerId:131,partnerReason:"你负责发光，他负责让你一直发光。他懂你的节奏，也懂什么时候该给你踩一脚刹车。",
+position:"对抗路 / 打野",positionDesc:"适合需要冲劲和变化的位置。你不适合一成不变，你需要的是不断有新的挑战。",
+hidden:"热闹是给别人的，孤独是留给自己的。",
+summary:"我不是不知道难，我只是觉得值得一试。"},
+
+{name:"镜",id:504,title:"冰镜之刃 · 理性至上的极致主义者",quote:"荣耀加冕，追梦不休。",
+traits:["理性","极致","专注","自省"],
+portrait:"你是一个对自我要求极高的人。你不满足于“差不多”，你追求的是“做到最好”。你有极强的理性思维，能够在情绪波动时保持清醒的判断。你习惯独处，在独处中你能够更高效地思考和成长。你对自己有清晰的认知，知道自己擅长什么、不擅长什么，并且会持续精进。",
+strength:"极致的专注力和自我要求。你做的事情，往往能达到别人达不到的高度。",
+weakness:"追求完美会让你失去享受过程的快乐。",
+advice:"你的极致追求让你在专业领域表现出色，但有时候“足够好”就是最好的状态，不要因为追求完美而让自己过度焦虑。在社交中，你的理性可能会让人觉得你“冷”，试着偶尔放下分析模式，单纯地享受当下的情感互动。",
+partnerName:"弈星",partnerId:197,partnerReason:"你们都懂，最复杂的东西往往最简单。配合起来像一个人在操作。",
+position:"打野 / 核心",positionDesc:"适合需要极致操作和专注度的位置。你不需要热闹，你需要的是一个安静的环境和明确的目标。",
+hidden:"对别人苛刻，对自己更苛刻。",
+summary:"我不是冷漠，我只是把所有的热情都用在了变强上。"},
+
+{name:"蔡文姬",id:184,title:"天籁弦音 · 温暖他人的小太阳",quote:"做个安静的美少女。",
+traits:["温暖","治愈","单纯","付出"],
+portrait:"你是一个天生温暖的人。你的存在就像冬日里的阳光，让人感到安心和舒适。你有一种治愈他人的能力，你的关心不是刻意的，而是发自内心的自然流露。你不喜欢复杂的事物，更倾向于简单直接地面对生活。你的快乐很简单，看到身边的人开心，你就会开心。",
+strength:"治愈他人的能力和让人放松的气场。有你在的地方，大家都会觉得没那么难。",
+weakness:"太在意别人的感受，容易委屈自己。",
+advice:"你的温暖和治愈力是难得的天赋，但不要因为总是照顾别人而忘记了自己。你的感受同样重要，学会表达自己的需求。在付出爱的同时，也要学会接受爱。你的简单和纯粹是宝贵的，但也要慢慢学会保护自己。",
+partnerName:"鲁班七号",partnerId:112,partnerReason:"你给他最温暖的后盾，他给你最漂亮的胜利。你保护他的纯粹，他回报你的付出。",
+position:"游走 / 辅助",positionDesc:"适合守护队友、提供支持的位置。你不追求高光，但你的存在让所有人都能放心输出。",
+hidden:"看起来最需要保护，其实一直在保护别人。",
+summary:"我可能不够强，但我能让你变得更强。"},
+
+{name:"元歌",id:125,title:"无间傀儡 · 复杂而深沉的多面手",quote:"幸福令人畏惧，更钟情绝望的美学。",
+traits:["复杂","多变","深邃","掌控"],
+portrait:"你是一个复杂而多层次的人。你不喜欢被简单地定义，因为你知道每个人都有很多面。你有一种深刻的理解力，能够看到事物表面之下的本质。你擅长在不同场合切换不同的角色，这不是虚伪，而是你性格中真实的多样性。你对人性有深刻的理解，这让你在人际交往中既游刃有余又保持一定的距离。",
+strength:"对人性的深刻理解和极强的适应能力。你总能比别人更早看透一件事的本质。",
+weakness:"过度切换会让你感到疲惫和迷失，有时候你会忘记哪个才是真正的自己。",
+advice:"你的复杂和深度让你成为一个有趣且有魅力的人，但有时候过度切换会让你感到疲惫和迷失。试着找到那个“最本真的自己”，不需要在所有场合都扮演不同的角色。另外，允许自己有时候不那么“深刻”，简单地快乐也是可以的。",
+partnerName:"貂蝉",partnerId:141,partnerReason:"你们都懂，最复杂的东西往往最简单。你们之间有一种不需要言说的默契。",
+position:"中路 / 对抗路",positionDesc:"适合需要多线操作和深度理解的位置。你不适合单一的角色，你需要的是可以施展的空间。",
+hidden:"扮演过太多角色，偶尔会忘记哪个是自己。",
+summary:"我有很多面，但每一面都是真的。"},
+
+{name:"狂铁",id:199,title:"命运角斗场 · 永不认输的斗士",quote:"迄今所有人生都大写着失败，但不妨碍我继续向前。",
+traits:["顽强","不屈","热血","行动派"],
+portrait:"你是一个从不服输的人。你的人生可能经历过不少挫折，但每一次跌倒你都爬了起来。你有极强的韧性和生命力，无论被打倒多少次，你都会重新站起来。你不喜欢抱怨，更倾向于用实际行动来改变现状。你的热血和坚持会感染身边的人，你就是那种“越挫越勇”的典型。",
+strength:"强大的抗压能力和永不放弃的意志。你被打倒过很多次，但你从来没有被打败过。",
+weakness:"太习惯硬扛，容易把自己逼到极限。",
+advice:"你的坚韧令人敬佩，但有时候也需要学会“战略性地放弃”。不是所有战斗都值得打，把精力集中在最重要的方向上。另外，不要总是把自己逼得太紧，适当休息和放松，是为了更好地出发。",
+partnerName:"兰陵王",partnerId:153,partnerReason:"他做影子，你做刀。他等机会，你创造机会。你们一明一暗，就是最狠的组合。",
+position:"对抗路",positionDesc:"适合正面硬刚、承受压力的位置。你不怕被针对，你怕的是没有挑战。",
+hidden:"所有的倔强，都是为了不让在乎的人失望。",
+summary:"我可以被打倒一百次，但我会站起来一百零一次。"}
+];
+
+// ==================================================================
+//  英雄画像（20 位，势力范围均匀分布）
+// ==================================================================
+const HERO_PROFILES = {
+// 勇气主导组
+"项羽":    {courage:0.92,wisdom:0.28,loyalty:0.52,aggression:0.78,teamwork:0.48,independence:0.38},
+"赵云":    {courage:0.82,wisdom:0.45,loyalty:0.75,aggression:0.60,teamwork:0.60,independence:0.45},
+"狂铁":    {courage:0.88,wisdom:0.25,loyalty:0.50,aggression:0.85,teamwork:0.42,independence:0.52},
+
+// 谋略主导组
+"诸葛亮":  {courage:0.32,wisdom:0.92,loyalty:0.55,aggression:0.22,teamwork:0.65,independence:0.50},
+"弈星":    {courage:0.28,wisdom:0.85,loyalty:0.48,aggression:0.22,teamwork:0.50,independence:0.62},
+"元歌":    {courage:0.40,wisdom:0.85,loyalty:0.32,aggression:0.55,teamwork:0.32,independence:0.80},
+
+// 忠诚主导组
+"张飞":    {courage:0.65,wisdom:0.32,loyalty:0.92,aggression:0.45,teamwork:0.88,independence:0.22},
+"蔡文姬":  {courage:0.22,wisdom:0.38,loyalty:0.85,aggression:0.15,teamwork:0.92,independence:0.20},
+
+// 进攻主导组
+"马超":    {courage:0.82,wisdom:0.42,loyalty:0.35,aggression:0.88,teamwork:0.35,independence:0.62},
+"兰陵王":  {courage:0.50,wisdom:0.70,loyalty:0.18,aggression:0.88,teamwork:0.12,independence:0.92},
+"花木兰":  {courage:0.85,wisdom:0.48,loyalty:0.58,aggression:0.82,teamwork:0.48,independence:0.65},
+
+// 团队主导组
+"大乔":    {courage:0.30,wisdom:0.78,loyalty:0.68,aggression:0.18,teamwork:0.92,independence:0.38},
+"孙膑":    {courage:0.22,wisdom:0.72,loyalty:0.78,aggression:0.12,teamwork:0.92,independence:0.28},
+"曜":      {courage:0.78,wisdom:0.40,loyalty:0.42,aggression:0.68,teamwork:0.55,independence:0.62},
+
+// 独立主导组
+"韩信":    {courage:0.62,wisdom:0.68,loyalty:0.22,aggression:0.72,teamwork:0.18,independence:0.92},
+"李白":    {courage:0.58,wisdom:0.58,loyalty:0.22,aggression:0.48,teamwork:0.22,independence:0.88},
+"镜":      {courage:0.62,wisdom:0.72,loyalty:0.32,aggression:0.70,teamwork:0.22,independence:0.88},
+
+// 双主型
+"铠":      {courage:0.85,wisdom:0.48,loyalty:0.70,aggression:0.62,teamwork:0.30,independence:0.85},
+"貂蝉":    {courage:0.55,wisdom:0.72,loyalty:0.42,aggression:0.48,teamwork:0.50,independence:0.68},
+"鲁班七号":{courage:0.48,wisdom:0.30,loyalty:0.38,aggression:0.65,teamwork:0.50,independence:0.55}
+};
+
+// ==================================================================
+//  状态
+// ==================================================================
+const DIMS = ['courage','wisdom','loyalty','aggression','teamwork','independence'];
+const DIM_NAMES = ['勇气','谋略','忠诚','进攻性','团队性','独立性'];
+let currentQ = 0;
+let answers = new Array(QUESTIONS.length).fill(-1);
+let finalValues = [];
+let advancing = false;
+
+// 预计算：每道题、每个维度的 min / max（用于 min-max 归一化）
+const Q_NORMS = QUESTIONS.map(q=>{
+  return DIMS.map((_, i)=>{
+    const vals = q.options.map(o => o.d[i]);
+    return { min: Math.min(...vals), max: Math.max(...vals) };
+  });
+});
+
+// ==================================================================
+//  页面切换
+// ==================================================================
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ==================================================================
+//  答题逻辑
+// ==================================================================
+function startQuiz(){
+  currentQ = 0;
+  answers = new Array(QUESTIONS.length).fill(-1);
+  advancing = false;
+  finalValues = [];
+  showPage('pageQuiz');
+  renderQuestion();
+}
+
+function renderQuestion(){
+  const q = QUESTIONS[currentQ];
+  document.getElementById('qCurrent').textContent = currentQ + 1;
+  document.getElementById('qBar').style.width = ((currentQ + 1) / QUESTIONS.length * 100) + '%';
+  document.getElementById('qSceneNum').textContent = String(currentQ + 1).padStart(2,'0');
+  document.getElementById('qSceneText').textContent = q.scene;
+
+  const optDiv = document.getElementById('qOptions');
+  optDiv.innerHTML = '';
+  const keys = ['A','B','C','D'];
+  const selected = answers[currentQ];
+
+  q.options.forEach((opt, i)=>{
+    const div = document.createElement('div');
+    div.className = 'quiz-option' + (selected === i ? ' selected' : '');
+    div.innerHTML = `<span class="opt-key">${keys[i]}</span><span>${opt.t}</span>`;
+    div.onclick = ()=> selectOption(i);
+    optDiv.appendChild(div);
+  });
+
+  document.getElementById('btnPrev').disabled = (currentQ === 0);
+  const btnNext = document.getElementById('btnNext');
+  btnNext.textContent = (currentQ === QUESTIONS.length - 1) ? '查看结果 ✦' : '下一题 →';
+  btnNext.disabled = (answers[currentQ] === -1);
+}
+
+function selectOption(idx){
+  if(advancing) return;
+
+  answers[currentQ] = idx;
+  const opts = document.getElementById('qOptions').children;
+  for(let i = 0; i < opts.length; i++){
+    opts[i].classList.toggle('selected', i === idx);
+  }
+  document.getElementById('btnNext').disabled = false;
+
+  opts[idx].style.transform = 'scale(.97)';
+  setTimeout(()=>{ opts[idx].style.transform = ''; }, 150);
+
+  // 自动跳下一题
+  advancing = true;
+  setTimeout(()=>{
+    advancing = false;
+    if(currentQ === QUESTIONS.length - 1){
+      submitQuiz();
+    }else{
+      currentQ++;
+      renderQuestion();
+    }
+  }, 400);
+}
+
+function prevQuestion(){
+  if(advancing) return;
+  if(currentQ > 0){
+    currentQ--;
+    renderQuestion();
+  }
+}
+
+function nextQuestion(){
+  if(advancing) return;
+  if(answers[currentQ] === -1) return;
+  if(currentQ === QUESTIONS.length - 1){
+    submitQuiz();
+  }else{
+    currentQ++;
+    renderQuestion();
+  }
+}
+
+// ==================================================================
+//  提交 → 计算得分（min-max 归一化）
+// ==================================================================
+function submitQuiz(){
+  const accum = {courage:0,wisdom:0,loyalty:0,aggression:0,teamwork:0,independence:0};
+  const count = {courage:0,wisdom:0,loyalty:0,aggression:0,teamwork:0,independence:0};
+
+  answers.forEach((ansIdx, qIdx)=>{
+    if(ansIdx === -1) return;
+    const chosenD = QUESTIONS[qIdx].options[ansIdx].d;
+    DIMS.forEach((d, i)=>{
+      const rng = Q_NORMS[qIdx][i];
+      let v;
+      if(rng.max === rng.min){
+        v = 0.5;
+      }else{
+        v = (chosenD[i] - rng.min) / (rng.max - rng.min);
+      }
+      accum[d] += v;
+      count[d] += 1;
+    });
+  });
+
+  finalValues = DIMS.map(d=>{
+    if(count[d] === 0) return 50;
+    return Math.round(accum[d] / count[d] * 100);
+  });
+
+  showPage('pageLoading');
+  const texts = ['正在解析你的人格数据','正在匹配 20 位英雄','正在生成专属人格画像','即将揭晓你的本命英雄'];
+  let ti = 0;
+  const timer = setInterval(()=>{
+    ti++;
+    if(ti < texts.length) document.getElementById('loadText').textContent = texts[ti];
+  }, 550);
+
+  setTimeout(()=>{
+    clearInterval(timer);
+    renderResult();
+    showPage('pageResult');
+  }, 2200);
+}
+
+// ==================================================================
+//  匹配英雄（确定性欧氏距离，无随机）
+// ==================================================================
+function matchHero(){
+  const norm = {};
+  DIMS.forEach((d,i)=>{ norm[d] = finalValues[i] / 100; });
+
+  let bestHero = HEROES[0];
+  let bestDist = Infinity;
+  HEROES.forEach(hero=>{
+    const profile = HERO_PROFILES[hero.name];
+    let dist = 0;
+    DIMS.forEach(d=>{
+      const diff = norm[d] - profile[d];
+      dist += diff * diff;
+    });
+    if(dist < bestDist){
+      bestDist = dist;
+      bestHero = hero;
+    }
+  });
+  return bestHero;
+}
+
+// ==================================================================
+//  结果渲染
+// ==================================================================
+function getHeroImg(id){
+  return `https://game.gtimg.cn/images/yxzj/img201606/heroimg/${id}/${id}.jpg`;
+}
+
+function imgFallback(el, name){
+  el.onerror = null;
+  const ch = name.charAt(0);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4a7dff"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect width="200" height="200" fill="url(#g)"/><text x="100" y="132" font-size="92" fill="white" text-anchor="middle" font-family="sans-serif" font-weight="bold">${ch}</text></svg>`;
+  el.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
+function renderResult(){
+  const hero = matchHero();
+
+  // ---- 英雄主卡 ----
+  document.getElementById('rHero').innerHTML = `
+    <div class="hero-tag">◈ 你的本命英雄 ◈</div>
+    <div class="hero-avatar-wrap">
+      <div class="avatar-ring ar1"></div>
+      <div class="avatar-ring ar2"></div>
+      <img class="hero-avatar" src="${getHeroImg(hero.id)}" alt="${hero.name}"
+           referrerpolicy="no-referrer"
+           onerror="imgFallback(this,'${hero.name}')">
+    </div>
+    <div class="hero-name">${hero.name}</div>
+    <div class="hero-title">${hero.title}</div>
+    <div class="hero-quote">“${hero.quote}”</div>
+  `;
+
+  // ---- 雷达图 ----
+  drawRadar(finalValues, DIM_NAMES);
+
+  // ---- 维度数值条 ----
+  document.getElementById('dimList').innerHTML = DIM_NAMES.map((n,i)=>`
+    <div class="dim-row">
+      <div class="dim-name">${n}</div>
+      <div class="dim-track"><div class="dim-fill" id="dimFill${i}"></div></div>
+      <div class="dim-val">${finalValues[i]}</div>
+    </div>
+  `).join('');
+  setTimeout(()=>{
+    finalValues.forEach((v,i)=>{
+      const el = document.getElementById('dimFill'+i);
+      if(el) el.style.width = v + '%';
+    });
+  }, 120);
+
+  // ---- 人物侧写 ----
+  document.getElementById('rPortrait').innerHTML = `
+    <div class="card-title">人物侧写<span class="en">PORTRAIT</span></div>
+    <p>${hero.portrait}</p>
+    <div class="traits">${hero.traits.map(t=>`<span class="trait">${t}</span>`).join('')}</div>
+  `;
+
+  // ---- 最佳搭档 ----
+  const partner = HEROES.find(h=>h.name === hero.partnerName) || HEROES[0];
+  document.getElementById('rPartner').innerHTML = `
+    <div class="card-title">你的最佳搭档<span class="en">BEST PARTNER</span></div>
+    <div class="partner-box">
+      <img class="partner-avatar" src="${getHeroImg(partner.id)}" alt="${partner.name}"
+           referrerpolicy="no-referrer"
+           onerror="imgFallback(this,'${partner.name}')">
+      <div class="partner-info">
+        <div class="partner-badge">最佳搭档</div>
+        <div class="partner-name">${partner.name}</div>
+        <div class="partner-reason">${hero.partnerReason}</div>
+      </div>
+    </div>
+    <p style="font-size:12.5px;color:#5a6785;line-height:1.75;margin-top:10px">
+      把你的结果发给朋友——如果他的「最佳搭档」正好是你，那你们就是天选队友。
+    </p>
+  `;
+
+  // ---- 契合位置 + 隐藏属性 ----
+  document.getElementById('rPosition').innerHTML = `
+    <div class="card-title">你的战场<span class="en">BATTLEFIELD</span></div>
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="info-icon">⚔️</div>
+        <div class="info-body">
+          <div class="info-label">最契合位置</div>
+          <div class="info-text">${hero.position}</div>
+        </div>
+      </div>
+      <div class="info-item purple">
+        <div class="info-icon">🎯</div>
+        <div class="info-body">
+          <div class="info-label">位置解读</div>
+          <div class="info-text">${hero.positionDesc}</div>
+        </div>
+      </div>
+      <div class="info-item cyan">
+        <div class="info-icon">✨</div>
+        <div class="info-body">
+          <div class="info-label">隐藏属性</div>
+          <div class="info-text">${hero.hidden}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // ---- 优势 / 注意 ----
+  document.getElementById('rStrength').innerHTML = `
+    <div class="card-title">你的能量图谱<span class="en">ENERGY MAP</span></div>
+    <div class="sw-grid">
+      <div class="sw-item good">
+        <span class="sw-label good">✓ 你的核心优势</span>
+        ${hero.strength}
+      </div>
+      <div class="sw-item warn">
+        <span class="sw-label warn">⚠ 需要留意的地方</span>
+        ${hero.weakness}
+      </div>
+    </div>
+  `;
+
+  // ---- 成长建议 + 彩蛋 ----
+  const maxIdx = finalValues.indexOf(Math.max(...finalValues));
+  const minIdx = finalValues.indexOf(Math.min(...finalValues));
+  document.getElementById('rAdvice').innerHTML = `
+    <div class="card-title">给你的成长建议<span class="en">ADVICE</span></div>
+    <div class="advice-box">${hero.advice}</div>
+    <div class="egg">
+      <div class="egg-title">◈ 隐藏彩蛋</div>
+      你的六维数据中，<strong>${DIM_NAMES[maxIdx]}</strong>是你的最高维度（${finalValues[maxIdx]}分），
+      <strong>${DIM_NAMES[minIdx]}</strong>是你的最低维度（${finalValues[minIdx]}分）。
+      这两项决定了你在人群中最独特的辨识度。
+    </div>
+  `;
+
+  // ---- 一句话总结 ----
+  document.getElementById('rSummary').innerHTML = `
+    <div class="summary-box">
+      <div class="big">“${hero.summary}”</div>
+    </div>
+  `;
+}
+
+// ==================================================================
+//  手绘雷达图
+// ==================================================================
+function drawRadar(values, labels){
+  const canvas = document.getElementById('radarCanvas');
+  if(!canvas) return;
+  const wrap = canvas.parentElement;
+  const size = Math.min(wrap.clientWidth || 300, 320);
+  const dpr = window.devicePixelRatio || 1;
+
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  canvas.style.width = size + 'px';
+  canvas.style.height = size + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, size, size);
+
+  const cx = size / 2;
+  const cy = size / 2 + 4;
+  const R = size / 2 - 46;
+  const n = labels.length;
+  const angleStep = Math.PI * 2 / n;
+  const startAngle = -Math.PI / 2;
+
+  // 网格层
+  const levels = 4;
+  for(let l = 1; l <= levels; l++){
+    const r = R * l / levels;
+    ctx.beginPath();
+    for(let i = 0; i < n; i++){
+      const a = startAngle + angleStep * i;
+      const x = cx + Math.cos(a) * r;
+      const y = cy + Math.sin(a) * r;
+      if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(74,125,255,' + (0.06 + l * 0.05) + ')';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // 轴线
+  for(let i = 0; i < n; i++){
+    const a = startAngle + angleStep * i;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R);
+    ctx.strokeStyle = 'rgba(74,125,255,0.16)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // 数据多边形
+  const pts = values.map((v, i)=>{
+    const a = startAngle + angleStep * i;
+    const r = R * Math.max(0.06, Math.min(1, v / 100));
+    return [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
+  });
+
+  const grad = ctx.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
+  grad.addColorStop(0, 'rgba(74,125,255,0.38)');
+  grad.addColorStop(0.5, 'rgba(139,92,246,0.32)');
+  grad.addColorStop(1, 'rgba(6,182,212,0.28)');
+
+  ctx.beginPath();
+  pts.forEach((p, i)=>{ if(i === 0) ctx.moveTo(p[0], p[1]); else ctx.lineTo(p[0], p[1]); });
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  ctx.beginPath();
+  pts.forEach((p, i)=>{ if(i === 0) ctx.moveTo(p[0], p[1]); else ctx.lineTo(p[0], p[1]); });
+  ctx.closePath();
+  ctx.strokeStyle = '#4a7dff';
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // 顶点
+  pts.forEach(p=>{
+    ctx.beginPath();
+    ctx.arc(p[0], p[1], 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.strokeStyle = '#4a7dff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+
+  // 标签 + 数值
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  labels.forEach((label, i)=>{
+    const a = startAngle + angleStep * i;
+    const lx = cx + Math.cos(a) * (R + 26);
+    const ly = cy + Math.sin(a) * (R + 26);
+
+    ctx.font = '700 12px -apple-system,PingFang SC,sans-serif';
+    ctx.fillStyle = '#3b4a6b';
+    ctx.fillText(label, lx, ly - 7);
+
+    ctx.font = '900 11px -apple-system,PingFang SC,sans-serif';
+    ctx.fillStyle = '#4a7dff';
+    ctx.fillText(values[i], lx, ly + 8);
+  });
+}
+
+// 窗口尺寸变化时重绘
+let resizeTimer = null;
+window.addEventListener('resize', ()=>{
+  if(!document.getElementById('pageResult').classList.contains('active')) return;
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(()=>{
+    if(finalValues.length) drawRadar(finalValues, DIM_NAMES);
+  }, 200);
+});
+
+// ==================================================================
+//  重新测试 / 分享
+// ==================================================================
+function restartQuiz(){
+  showPage('pageHome');
+}
+
+function shareResult(){
+  const hero = matchHero();
+  const text = `【王者人格测试】我的本命英雄是「${hero.name}」——${hero.title}\n\n“${hero.quote}”\n\n我的最佳搭档是「${hero.partnerName}」\n我的六维人格：${DIM_NAMES.map((n,i)=>n+finalValues[i]).join(' / ')}\n\n你也来测测你的本命英雄是谁？`;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>{
+      alert('✓ 结果文案已复制到剪贴板\n\n你可以粘贴到微信、小红书等平台分享～');
+    }).catch(()=>{
+      alert('长按页面截图保存，即可分享给朋友～');
+    });
+  }else{
+    alert('长按页面截图保存，即可分享给朋友～');
+  }
+}
+
+// ==================================================================
+//  粒子背景
+// ==================================================================
+(function(){
+  const canvas = document.getElementById('bgCanvas');
+  const ctx = canvas.getContext('2d');
+  let w, h, particles = [];
+
+  function resize(){
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const COLORS = ['rgba(74,125,255,', 'rgba(139,92,246,', 'rgba(6,182,212,'];
+
+  for(let i = 0; i < 42; i++){
+    particles.push({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.35,
+      vy: (Math.random() - 0.5) * 0.35,
+      r: Math.random() * 1.8 + 0.8,
+      c: COLORS[Math.floor(Math.random() * COLORS.length)],
+      a: Math.random() * 0.35 + 0.15
+    });
+  }
+
+  function draw(){
+    ctx.clearRect(0, 0, w, h);
+
+    for(let i = 0; i < particles.length; i++){
+      for(let j = i + 1; j < particles.length; j++){
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if(dist < 110){
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = 'rgba(120,150,255,' + (0.07 * (1 - dist / 110)) + ')';
+          ctx.lineWidth = 0.7;
+          ctx.stroke();
+        }
+      }
+    }
+
+    particles.forEach(p=>{
+      p.x += p.vx;
+      p.y += p.vy;
+      if(p.x < -10) p.x = w + 10;
+      if(p.x > w + 10) p.x = -10;
+      if(p.y < -10) p.y = h + 10;
+      if(p.y > h + 10) p.y = -10;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.c + p.a + ')';
+      ctx.fill();
+    });
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>
